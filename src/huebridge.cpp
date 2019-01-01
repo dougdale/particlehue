@@ -22,11 +22,9 @@ HueBridge::HueBridge(const String& ip, const String& user)
     //request_prefix = String("/api/ol9m2fds1fAsmDDD0mdp33myAt3ZIi6txh6-NJGU");
 }
 
-int HueBridge::set_group(const String &group)
+int HueBridge::find_group(const char *group, const char *type)
 {
-    const size_t bufferSize = JSON_ARRAY_SIZE(0) + JSON_ARRAY_SIZE(2) +
-                              JSON_ARRAY_SIZE(4) + JSON_OBJECT_SIZE(2) +
-                              JSON_OBJECT_SIZE(8) + JSON_OBJECT_SIZE(9) + 250;
+    const size_t bufferSize = 1024;
     StaticJsonBuffer<bufferSize> jsonBuffer;
     char groupStr[12];
 
@@ -50,18 +48,48 @@ int HueBridge::set_group(const String &group)
             //p.value // is a JsonVariant
         }
 
-        // Look for a group of the "Room" type
         Serial.println(root["type"].as<char*>());
-        if (strcmp(root["type"], "Room") == 0) {
-            Serial.println("--- ROOM TYPE");
-            if (strcmp(root["name"], group) == 0) {
-                Serial.println("MATCH!");
-                return roomNum;
-            }
+        if ((strcmp(root["name"], group) == 0) &&
+            (strcmp(root["type"], type) == 0)) {
+            Serial.println("MATCH!");
+            return roomNum;
         }
 
         jsonBuffer.clear();
     }
 
     return -1;
+}
+
+int HueBridge::groupOn(int groupNumber)
+{
+    return groupCommand(groupNumber, "{\"on\":true}");
+}
+
+int HueBridge::groupOff(int groupNumber)
+{
+    return groupCommand(groupNumber, "{\"on\":false}");
+}
+
+int HueBridge::groupCommand(int groupNumber, const char *command)
+{
+    if (groupNumber < 1) return -1;
+
+    char groupStr[20];
+    request.body = command;
+    request.path = request_prefix;
+    sprintf(groupStr, "/groups/%d/action", groupNumber);
+    request.path.concat(groupStr);
+
+    http.put(request, response, headers);
+
+#ifdef LOGGING
+    Serial.print("Application>\tResponse status: ");
+    Serial.println(response.status);
+
+    Serial.print("Application>\tHTTP Response Body: ");
+    Serial.println(response.body);
+#endif
+
+    return 0;
 }
