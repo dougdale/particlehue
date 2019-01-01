@@ -1,4 +1,7 @@
 #include "huebridge.h"
+#include <ArduinoJson.h>
+#include <stdio.h>
+#include <string.h>
 
 #define LOGGING
 
@@ -21,20 +24,44 @@ HueBridge::HueBridge(const String& ip, const String& user)
 
 int HueBridge::set_group(const String &group)
 {
-    Serial.print("PREFIX: ");
-    Serial.println(request_prefix);
+    const size_t bufferSize = JSON_ARRAY_SIZE(0) + JSON_ARRAY_SIZE(2) +
+                              JSON_ARRAY_SIZE(4) + JSON_OBJECT_SIZE(2) +
+                              JSON_OBJECT_SIZE(8) + JSON_OBJECT_SIZE(9) + 250;
+    StaticJsonBuffer<bufferSize> jsonBuffer;
+    char groupStr[12];
 
-    request.path = request_prefix;
-    request.path.concat("/groups/1");
-    Serial.print("REQUEST: ");
-    Serial.println(request.path);
-    http.get(request, response, headers);
+    for (int roomNum = 1; roomNum <= 20; roomNum++) {
+        request.path = request_prefix;
+        sprintf(groupStr, "/groups/%d", roomNum);
+        request.path.concat(groupStr);
+        http.get(request, response, headers);
 
 #ifdef LOGGING
-    Serial.print("Application>\tResponse status: ");
-    Serial.println(response.status);
+        Serial.print("Application>\tResponse status: ");
+        Serial.println(response.status);
 
-    Serial.print("Application>\tHTTP Response Body: ");
-    Serial.println(response.body);
+        Serial.print("Application>\tHTTP Response Body: ");
+        Serial.println(response.body);
 #endif
+
+        JsonObject& root = jsonBuffer.parseObject(response.body.c_str());
+        for (JsonPair& p : root) {
+            Serial.println(p.key); // is a const char* pointing to the key
+            //p.value // is a JsonVariant
+        }
+
+        // Look for a group of the "Room" type
+        Serial.println(root["type"].as<char*>());
+        if (strcmp(root["type"], "Room") == 0) {
+            Serial.println("--- ROOM TYPE");
+            if (strcmp(root["name"], group) == 0) {
+                Serial.println("MATCH!");
+                return roomNum;
+            }
+        }
+
+        jsonBuffer.clear();
+    }
+
+    return -1;
 }
