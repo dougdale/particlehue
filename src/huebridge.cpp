@@ -24,7 +24,7 @@ HueBridge::HueBridge(const String& ip, const String& user)
 
 int HueBridge::find_group(const char *group, const char *type)
 {
-    const size_t bufferSize = 1024;
+    const size_t bufferSize = 2048;
     StaticJsonBuffer<bufferSize> jsonBuffer;
     char groupStr[12];
 
