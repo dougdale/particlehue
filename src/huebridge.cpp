@@ -13,23 +13,33 @@ http_header_t headers[] = {
     { NULL, NULL } // NOTE: Always terminate headers will NULL
 };
 
-HueBridge::HueBridge(const char *ip, const char *user)
+HueBridge::HueBridge(void)
 {
-    request.hostname = ip;
-    request.port = 80;
-    request_prefix = String("/api");
-    request_prefix.concat(user);
-    //request_prefix = String("/api/ol9m2fds1fAsmDDD0mdp33myAt3ZIi6txh6-NJGU");
 }
 
-int HueBridge::find_group(const char *group, const char *type)
+int HueBridge::config(const char *ip, const char *user)
+{
+#ifdef LOGGING
+    Serial.println(ip);
+    Serial.println(user);
+#endif
+
+    request.hostname = ip;
+    request.port = 80;
+    requestPrefix = String("/api");
+    requestPrefix.concat(user);
+
+    return 0;
+}
+
+int HueBridge::findGroup(const char *group, const char *type)
 {
     const size_t bufferSize = 2048;
     StaticJsonBuffer<bufferSize> jsonBuffer;
     char groupStr[12];
 
     for (int roomNum = 1; roomNum <= 20; roomNum++) {
-        request.path = request_prefix;
+        request.path = requestPrefix;
         sprintf(groupStr, "/groups/%d", roomNum);
         request.path.concat(groupStr);
         http.get(request, response, headers);
@@ -77,7 +87,7 @@ int HueBridge::groupCommand(int groupNumber, const char *command)
 
     char groupStr[20];
     request.body = command;
-    request.path = request_prefix;
+    request.path = requestPrefix;
     sprintf(groupStr, "/groups/%d/action", groupNumber);
     request.path.concat(groupStr);
 

@@ -5,9 +5,10 @@
 
 class HueBridge {
 public:
-    HueBridge(const char *ip, const char *user);
+    HueBridge(void);
 
-    int find_group(const char *group, const char *type);
+    int config(const char *ip, const char *user);
+    int findGroup(const char *group, const char *type);
     int groupOn(int groupNumber);
     int groupOff(int groupNumber);
 
@@ -15,7 +16,7 @@ private:
     HttpClient http;
     http_request_t request;
     http_response_t response;
-    String request_prefix;
+    String requestPrefix;
 
     int groupCommand(int groupNumber, const char *command);
 };

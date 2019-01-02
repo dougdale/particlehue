@@ -1,9 +1,52 @@
 // This #include statement was automatically added by the Particle IDE.
 #include "huebridge.h"
 
-#define LOGGING
+// Define HUEUSER in this file (a Hue user ID string) and HUEIP (IP addr string)
+#include "particlehue_config.h"
 
-HueBridge bridge("192.168.1.15", "ol9m2fds1fAsmDDD0mdp33myAt3ZIi6txh6-NJGU");
+#define LOGGING
+typedef struct {
+    char bridge_ip[16];
+    char bridge_user[50];
+    char room[40];
+    struct {
+        uint8_t hour;
+        uint8_t minute;
+        char scene[40];
+    } daySegments[4];
+} particlehue_config_t;
+
+// FIXME: Read/Write this to EEPROM
+particlehue_config_t particlehue_config = {
+    { .bridge_ip = HUEIP },
+    { .bridge_user = HUEUSER },
+    { .room = "Living Room" },
+    .daySegments = {
+        {
+            .hour = 5,
+            .minute = 30,
+            { .scene = "Bright" },
+        },
+        {
+            .hour = 17,
+            .minute = 0,
+            { .scene = "none" },
+        },
+        {
+            .hour = 22,
+            .minute = 30,
+            { .scene = "Night Light" }
+        },
+        {
+            .hour = 0xff,
+            .minute = 0xff,
+            { .scene = "none" }
+        }
+    }
+};
+
+HueBridge bridge;
+
 int groupNumber;
 
 int motionWeb(String command);
@@ -19,7 +62,9 @@ void setup() {
     // Set up a cloud function to simulate motion
     Particle.function("motion", motionWeb);
 
-    groupNumber = bridge.find_group("Living Room", "Room");
+    bridge.config(particlehue_config.bridge_ip, particlehue_config.bridge_user);
+
+    groupNumber = bridge.findGroup("Living Room", "Room");
 }
 
 void loop() {
