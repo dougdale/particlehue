@@ -13,7 +13,7 @@ http_header_t headers[] = {
     { NULL, NULL } // NOTE: Always terminate headers will NULL
 };
 
-HueBridge::HueBridge(const String& ip, const String& user)
+HueBridge::HueBridge(const char *ip, const char *user)
 {
     request.hostname = ip;
     request.port = 80;

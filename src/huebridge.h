@@ -5,7 +5,7 @@
 
 class HueBridge {
 public:
-    HueBridge(const String& ip, const String& user);
+    HueBridge(const char *ip, const char *user);
 
     int find_group(const char *group, const char *type);
     int groupOn(int groupNumber);
